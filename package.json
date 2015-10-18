@@ -1,0 +1,52 @@
+{
+	"name" : "haraka-plugin-dovecot",
+	"version" : "0.0.1",
+	"description" : "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and Login via SMTP.",
+	"author" : {
+		"name" : "Josef Fröhle",
+		"email" : "github@josef-froehle.de",
+		"url" : "https://www.josef-froehle.de/"
+	},
+	"main" : "lib/index.js",
+	"homepage" : "https://github.com/Dexus/haraka-plugin-dovecot",
+	"keywords" : [
+		"email",
+		"mail",
+		"dovecot",
+		"plaintext",
+		"login",
+		"lmtp",
+		"auth",
+		"mailbox"
+	],
+	"bugs" : {
+		"url" : "https://github.com/Dexus/haraka-plugin-dovecot/issues"
+	},
+	"config" : {
+		"blanket" : {
+			"pattern" : "lib/index.js"
+		}
+	},
+	"scripts" : {
+		"test" : "./node_modules/.bin/mocha",
+		"coveralls" : "DOVECOT_COVERAGE=1 ./node_modules/.bin/mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"
+	},
+	"repository" : {
+		"type" : "git",
+		"url" : "git://github.com/Dexus/haraka-plugin-dovecot.git"
+	},
+	"devDependencies" : {
+		"grunt" : "*",
+		"grunt-contrib-clean" : "*",
+		"grunt-contrib-jshint" : "*",
+		"grunt-coveralls" : "*",
+		"grunt-mocha-test" : "*",
+		"grunt-version-check" : "*",
+		"eslint" : "*",
+		"grunt-eslint" : "*",
+		"mocha" : "*"
+	},
+	"license" : "MIT",
+	"dependencies" : {},
+	"optionalDependencies" : {}
+}

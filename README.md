@@ -1,2 +1,2 @@
 # haraka-plugin-dovecot
-Haraka mail plugin to verify the mailbox is available in dovecot and smtp login via dovecot auth
+Haraka mail plugin that checks whether a mailbox exists (Dovecot auth-master) and the SMTP-Auth per Dovecot (service auth is also used by Postfix) allowed.
