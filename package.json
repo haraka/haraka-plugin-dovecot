@@ -1,15 +1,15 @@
 {
-	"name" : "haraka-plugin-dovecot",
-	"version" : "0.0.1",
-	"description" : "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and Login via SMTP.",
-	"author" : {
-		"name" : "Josef Fröhle",
-		"email" : "github@josef-froehle.de",
-		"url" : "https://www.josef-froehle.de/"
+	"name": "haraka-plugin-dovecot",
+	"version": "0.1.0",
+	"description": "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and SMTP AUTH",
+	"author": {
+		"name": "Josef Frï¿½hle",
+		"email": "github@josef-froehle.de",
+		"url": "https://www.josef-froehle.de/"
 	},
-	"main" : "lib/index.js",
-	"homepage" : "https://github.com/Dexus/haraka-plugin-dovecot",
-	"keywords" : [
+	"main": "index.js",
+	"homepage": "https://github.com/haraka/haraka-plugin-dovecot",
+	"keywords": [
 		"email",
 		"mail",
 		"dovecot",
@@ -19,34 +19,30 @@
 		"auth",
 		"mailbox"
 	],
-	"bugs" : {
-		"url" : "https://github.com/Dexus/haraka-plugin-dovecot/issues"
+	"bugs": {
+		"url": "https://github.com/haraka/haraka-plugin-dovecot/issues"
 	},
-	"config" : {
-		"blanket" : {
-			"pattern" : "lib/index.js"
+	"config": {
+		"blanket": {
+			"pattern": "lib/index.js"
 		}
 	},
-	"scripts" : {
-		"test" : "./node_modules/.bin/mocha",
-		"coveralls" : "DOVECOT_COVERAGE=1 ./node_modules/.bin/mocha --require blanket --reporter mocha-lcov-reporter | ./node_modules/coveralls/bin/coveralls.js"
+	"scripts": {
+		"test": "npx mocha",
+		"lint": "npx eslint *.js test/*.js",
+		"lintfix": "npx eslint --fix *.js test/*.js",
+		"coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js"
 	},
-	"repository" : {
-		"type" : "git",
-		"url" : "git://github.com/Dexus/haraka-plugin-dovecot.git"
+	"repository": {
+		"type": "git",
+		"url": "git://github.com/haraka/haraka-plugin-dovecot.git"
 	},
-	"devDependencies" : {
-		"grunt" : "*",
-		"grunt-contrib-clean" : "*",
-		"grunt-contrib-jshint" : "*",
-		"grunt-coveralls" : "*",
-		"grunt-mocha-test" : "*",
-		"grunt-version-check" : "*",
-		"eslint" : "*",
-		"grunt-eslint" : "*",
-		"mocha" : "*"
+	"devDependencies": {
+		"eslint": "*",
+		"eslint-plugin-haraka": "*",
+		"mocha": "*"
 	},
-	"license" : "MIT",
-	"dependencies" : {},
-	"optionalDependencies" : {}
+	"license": "MIT",
+	"dependencies": {},
+	"optionalDependencies": {}
 }
