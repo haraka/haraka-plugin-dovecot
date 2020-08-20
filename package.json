@@ -30,6 +30,7 @@
 	"scripts": {
 		"test": "npx mocha",
 		"lint": "npx eslint *.js test/*.js",
+		"lintfix": "npx eslint --fix *.js test/*.js",
 		"coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js"
 	},
 	"repository": {
