@@ -21,7 +21,7 @@ const setup = {
       }
       console.log('failing back to memory for tests');
       nosql = new NoSQL('test', { store: 'ram' }, done);
-    });
+    })
   }
 };
 
@@ -37,21 +37,21 @@ const setup = {
         assert.ifError(err);
         assert.ok(result < 2);
         done();
-      });
-    });
+      })
+    })
 
     it('get', function (done) {
       nosql.set('foo', 'bar', function (err, result) {
         assert.ifError(err);
         assert.ok(result < 2);
 
-        nosql.get('foo', function (err, result) {
-          assert.ifError(err);
-          assert.equal(result, 'bar');
+        nosql.get('foo', function (err2, result2) {
+          assert.ifError(err2);
+          assert.equal(result2, 'bar');
           done();
-        });
-      });
-    });
+        })
+      })
+    })
 
     it('del', function (done) {
       nosql.del('foo', function (err, result) {
@@ -59,20 +59,20 @@ const setup = {
         assert.ifError(err);
         assert.equal(result, 1);
         done();
-      });
-    });
+      })
+    })
 
     it('get is null after del', function (done) {
       nosql.del('foo', function (err, result) {
         assert.ifError(err);
 
-        nosql.get('foo', function (err, result) {
-          assert.ifError(err);
-          assert.equal(result, null);
+        nosql.get('foo', function (err2, result2) {
+          assert.ifError(err2);
+          assert.equal(result2, null);
           done();
-        });
-      });
-    });
+        })
+      })
+    })
 
     it('incr, init to incr val', function (done) {
       nosql.incrby('foo', 1, function (err, result) {
@@ -80,42 +80,42 @@ const setup = {
         assert.ifError(err);
         assert.equal(result, 1);
         done();
-      });
-    });
+      })
+    })
 
     it('incr, increments', function (done) {
       nosql.set('foo', 1, function (err, res1) {
         assert.ifError(err);
 
-        nosql.incrby('foo', 2, function (err, res2) {
-          assert.ifError(err);
+        nosql.incrby('foo', 2, function (err2, res2) {
+          assert.ifError(err2);
           assert.equal(res2, 3);
 
-          nosql.incrby('foo', 4, function (err, res3) {
-            assert.ifError(err);
+          nosql.incrby('foo', 4, function (err3, res3) {
+            assert.ifError(err3);
             assert.equal(res3, 7);
             done();
-          });
-        });
-      });
-    });
+          })
+        })
+      })
+    })
 
     it('incr, decrements', function (done) {
       nosql.set('foo', 1, function (err) {
         assert.ifError(err);
 
-        nosql.incrby('foo', -1, function (err, res1) {
-          assert.ifError(err);
+        nosql.incrby('foo', -1, function (err1, res1) {
+          assert.ifError(err1);
           assert.equal(res1, 0);
 
-          nosql.incrby('foo', -2, function (err, res2) {
-            assert.ifError(err);
+          nosql.incrby('foo', -2, function (err2, res2) {
+            assert.ifError(err2);
             assert.equal(res2, -2);
             done();
-          });
-        });
-      });
-    });
+          })
+        })
+      })
+    })
 
     it('reset', function (done) {
       nosql.reset(function (err, result) {
@@ -123,23 +123,23 @@ const setup = {
         assert.ifError(err);
         assert.equal(result, 1);
         done();
-      });
-    });
+      })
+    })
 
     if (store !== 'ssc') {
       // Strong Store Cluster doesn't have a reset option
       it('get is empty after reset', function (done) {
         nosql.set('foo', 'bar', function (err, res1) {
-          nosql.reset(function (err, res1) {
-            nosql.get('foo', function (err, res2) {
+          nosql.reset(function (err2, res2) {
+            nosql.get('foo', function (err3, res3) {
               // console.log(arguments);
-              assert.ifError(err);
-              assert.equal(res2, null);
+              assert.ifError(err3);
+              assert.equal(res3, null);
               done();
-            });
-          });
-        });
-      });
+            })
+          })
+        })
+      })
     }
-  });
-});
+  })
+})

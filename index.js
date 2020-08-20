@@ -24,10 +24,7 @@ exports.check_mail_on_dovecot = function (next, connection, params) {
 
   const email = params[0].address();
   if (!email) { // likely an IP with relaying permission
-    txn.results.add(plugin, {
-      skip : 'mail_from.null',
-      emit : true
-    });
+    txn.results.add(plugin, { skip : 'mail_from.null', emit : true });
     return next();
   }
 
@@ -63,10 +60,6 @@ exports.check_rcpt_on_dovecot = function (next, connection, params) {
 
   const rcpt = params[0];
   const domain = rcpt.host.toLowerCase();
-
-  txn.results.add(plugin, {
-    msg : `sock: ${  options.host  }:${  options.port}`
-  });
 
   // Qmail::Deliverable::Client does a rfc2822 "atext" test
   // but Haraka has already validated for us by this point
@@ -128,29 +121,32 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
     }
   }
 
-  connection.logdebug(plugin, `checking ${  email}`);
+  connection.transaction.results.add(plugin, {
+    msg : `sock: ${ options.host }:${ options.port }`
+  })
+
+  connection.logdebug(plugin, `checking ${email}`);
   const client = net.connect(options, function () { //'connect' listener
-    connection.logprotocol(plugin, `connect to Dovecot auth-master:${  JSON.stringify(options)}`);
+    connection.logprotocol(plugin, `connect to Dovecot auth-master:${JSON.stringify(options)}`);
   })
 
-  client.on('data', function (chunk) {
-    connection.logprotocol(plugin, `BODY: ${  chunk}`);
-    const arr = exports.check_dovecot_response(chunk.toString());
-    if (arr[0] === CONT) {
-      const username = 'postmaster\@example.com';
-      const send_data = `${'VERSION\t1\t0\n' + 'USER\t1\t'}${  email.replace("@", "\@")  }\tservice=smtp\n`;
-      client.write(send_data);
-    }
-    else {
-      cb(undefined, arr);
-    }
-  })
-
-    .on('error', function (e) {
+  client
+    .on('data', (chunk) => {
+      connection.logprotocol(plugin, `BODY: ${chunk}`);
+      const arr = exports.check_dovecot_response(chunk.toString());
+      if (arr[0] === CONT) {
+        const send_data = `${'VERSION\t1\t0\n' + 'USER\t1\t'}${  email.replace("@", "@")  }\tservice=smtp\n`;
+        client.write(send_data);
+      }
+      else {
+        cb(undefined, arr);
+      }
+    })
+    .on('error', (e) => {
       client.end();
       cb(e);
     })
-    .on('end', function () {
+    .on('end', () => {
       connection.logprotocol(plugin, 'closed connect to Dovecot auth-master');
     })
 }
