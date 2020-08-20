@@ -2,7 +2,7 @@
 
 var assert  = require('assert');
 
-var NoSQL  = require('../lib/');
+var NoSQL   = require('../index');
 var nosql;
 
 var setup = {
@@ -90,7 +90,7 @@ var setup = {
                 nosql.incrby('foo', 2, function (err, res2) {
                     assert.ifError(err);
                     assert.equal(res2, 3);
-                    
+
                     nosql.incrby('foo', 4, function (err, res3) {
                         assert.ifError(err);
                         assert.equal(res3, 7);
