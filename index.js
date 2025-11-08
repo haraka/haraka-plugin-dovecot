@@ -134,7 +134,7 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
     //'connect' listener
     connection.logprotocol(
       plugin,
-      `connect to Dovecot auth-master:${JSON.stringify(options)}`,
+      `connect to Dovecot auth-userdb:${JSON.stringify(options)}`,
     );
   });
 
@@ -153,10 +153,10 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
       client.end();
       cb(e);
     })
-    .on("end", () => {
-      connection.logprotocol(plugin, "closed connect to Dovecot auth-master");
-    });
-};
+    .on('end', () => {
+      connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb');
+    })
+}
 
 exports.check_dovecot_response = function (data) {
   if (data.match(/^VERSION\t\d+\t/i) && data.slice(-1) === "\n") {
