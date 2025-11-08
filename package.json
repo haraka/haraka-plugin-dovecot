@@ -7,6 +7,10 @@
     "email": "github@josef-froehle.de",
     "url": "https://www.josef-froehle.de/"
   },
+  "files": [
+    "CHANGELOG.md",
+    "config"
+  ],
   "main": "index.js",
   "homepage": "https://github.com/haraka/haraka-plugin-dovecot",
   "keywords": [
