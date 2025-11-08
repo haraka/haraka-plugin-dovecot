@@ -3,6 +3,7 @@
 const net = require('node:net');
 
 exports.register = function () {
+  this.load_dovecot_ini();
   this.register_hook('rcpt', 'check_rcpt_on_dovecot');
   this.register_hook('mail', 'check_mail_on_dovecot');
 };
