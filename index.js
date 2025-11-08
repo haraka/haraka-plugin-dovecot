@@ -3,6 +3,7 @@
 const net = require('node:net');
 
 exports.register = function () {
+  this.load_dovecot_ini();
   this.register_hook('rcpt', 'check_rcpt_on_dovecot');
   this.register_hook('mail', 'check_mail_on_dovecot');
 };
@@ -121,6 +122,9 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
     }
   }
 
+  const socket_address = options.path ?
+    options.path :
+    `${options.host}:${options.port}`;
   connection.transaction.results.add(plugin, {
     msg: `sock: ${options.host}:${options.port}`,
   });
@@ -130,7 +134,7 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
     //'connect' listener
     connection.logprotocol(
       plugin,
-      `connect to Dovecot auth-master:${JSON.stringify(options)}`,
+      `connect to Dovecot auth-userdb:${JSON.stringify(options)}`,
     );
   });
 
@@ -149,10 +153,10 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
       client.end();
       cb(e);
     })
-    .on("end", () => {
-      connection.logprotocol(plugin, "closed connect to Dovecot auth-master");
-    });
-};
+    .on('end', () => {
+      connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb');
+    })
+}
 
 exports.check_dovecot_response = function (data) {
   if (data.match(/^VERSION\t\d+\t/i) && data.slice(-1) === "\n") {
