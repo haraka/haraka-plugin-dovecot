@@ -1,64 +1,64 @@
-'use strict';
+'use strict'
 
-const net = require('node:net');
+const net = require('node:net')
 
 exports.register = function () {
-  this.load_dovecot_ini();
-  this.register_hook('rcpt', 'check_rcpt_on_dovecot');
-  this.register_hook('mail', 'check_mail_on_dovecot');
-};
+  this.load_dovecot_ini()
+  this.register_hook('rcpt', 'check_rcpt_on_dovecot')
+  this.register_hook('mail', 'check_mail_on_dovecot')
+}
 
 exports.load_dovecot_ini = function () {
-  this.cfg = this.config.get("dovecot.ini", () => {
-    this.load_dovecot_ini();
-  });
-};
+  this.cfg = this.config.get('dovecot.ini', () => {
+    this.load_dovecot_ini()
+  })
+}
 
 exports.check_mail_on_dovecot = function (next, connection, params) {
-  if (!this.cfg.main.check_outbound) return next();
+  if (!this.cfg.main.check_outbound) return next()
 
   // determine if MAIL FROM domain is local
-  const txn = connection.transaction;
+  const txn = connection.transaction
 
-  const email = params[0].address();
+  const email = params[0].address()
   if (!email) {
     // likely an IP with relaying permission
-    txn.results.add(this, { skip: "mail_from.null", emit: true });
-    return next();
+    txn.results.add(this, { skip: 'mail_from.null', emit: true })
+    return next()
   }
 
-  const domain = params[0].host.toLowerCase();
+  const domain = params[0].host.toLowerCase()
 
   this.get_dovecot_response(connection, domain, email, (err, result) => {
     if (err) {
-      txn.results.add(this, { err });
-      return next(DENYSOFT, err);
+      txn.results.add(this, { err })
+      return next(DENYSOFT, err)
     }
 
     // the MAIL FROM sender is verified as a local address
     if (result[0] === OK) {
-      txn.results.add(this, { pass: `mail_from.${result[1]}` });
-      txn.notes.local_sender = true;
-      return next();
+      txn.results.add(this, { pass: `mail_from.${result[1]}` })
+      txn.notes.local_sender = true
+      return next()
     }
 
     if (result[0] === undefined) {
-      txn.results.add(this, { err: `mail_from.${result[1]}` });
-      return next();
+      txn.results.add(this, { err: `mail_from.${result[1]}` })
+      return next()
     }
 
-    txn.results.add(this, { msg: `mail_from.${result[1]}` });
-    next(CONT, `mail_from.${result[1]}`);
-  });
-};
+    txn.results.add(this, { msg: `mail_from.${result[1]}` })
+    next(CONT, `mail_from.${result[1]}`)
+  })
+}
 
 exports.check_rcpt_on_dovecot = function (next, connection, params) {
-  const plugin = this;
-  const txn = connection.transaction;
-  if (!txn) return;
+  const plugin = this
+  const txn = connection.transaction
+  if (!txn) return
 
-  const rcpt = params[0];
-  const domain = rcpt.host.toLowerCase();
+  const rcpt = params[0]
+  const domain = rcpt.host.toLowerCase()
 
   // Qmail::Deliverable::Client does a rfc2822 "atext" test
   // but Haraka has already validated for us by this point
@@ -68,107 +68,107 @@ exports.check_rcpt_on_dovecot = function (next, connection, params) {
     rcpt.address(),
     (err, result) => {
       if (err) {
-        connection.logerror(plugin, err);
-        txn.results.add(plugin, { err });
-        return next(DENYSOFT, "error validating email address");
+        connection.logerror(plugin, err)
+        txn.results.add(plugin, { err })
+        return next(DENYSOFT, 'error validating email address')
       }
 
       if (result[0] === OK) {
-        txn.results.add(plugin, { pass: `rcpt.${result[1]}` });
-        return next(OK);
+        txn.results.add(plugin, { pass: `rcpt.${result[1]}` })
+        return next(OK)
       }
 
       // a client with relaying privileges is sending from a local domain.
       // Any RCPT is acceptable.
       if (connection.relaying && txn.notes.local_sender) {
-        txn.results.add(plugin, { pass: "relaying local_sender" });
-        return next(OK);
+        txn.results.add(plugin, { pass: 'relaying local_sender' })
+        return next(OK)
       }
 
       if (result[0] === undefined) {
-        txn.results.add(plugin, { err: `rcpt.${result[1]}` });
-        return next();
+        txn.results.add(plugin, { err: `rcpt.${result[1]}` })
+        return next()
       }
 
       // no need to DENY[SOFT] for invalid addresses. If no rcpt_to.* plugin
       // returns OK, then the address is not accepted.
-      txn.results.add(plugin, { msg: `rcpt.${result[1]}` });
-      next(CONT, result[1]);
+      txn.results.add(plugin, { msg: `rcpt.${result[1]}` })
+      next(CONT, result[1])
     },
-  );
-};
+  )
+}
 
 exports.get_dovecot_response = function (connection, domain, email, cb) {
-  const plugin = this;
-  const options = {};
+  const plugin = this
+  const options = {}
 
   if (plugin.cfg[domain]) {
     if (plugin.cfg[domain].path) {
-      options.path = plugin.cfg[domain].path;
+      options.path = plugin.cfg[domain].path
     } else {
       if (plugin.cfg[domain].host) {
-        options.host = plugin.cfg[domain].host;
+        options.host = plugin.cfg[domain].host
       }
       if (plugin.cfg[domain].port) {
-        options.port = plugin.cfg[domain].port;
+        options.port = plugin.cfg[domain].port
       }
     }
   } else {
     if (plugin.cfg.main.path) {
-      options.path = plugin.cfg.main.path;
+      options.path = plugin.cfg.main.path
     } else {
-      if (plugin.cfg.main.host) options.host = plugin.cfg.main.host;
-      if (plugin.cfg.main.port) options.port = plugin.cfg.main.port;
+      if (plugin.cfg.main.host) options.host = plugin.cfg.main.host
+      if (plugin.cfg.main.port) options.port = plugin.cfg.main.port
     }
   }
 
-  const socket_address = options.path ?
-    options.path :
-    `${options.host}:${options.port}`;
+  const socket_address = options.path
+    ? options.path
+    : `${options.host}:${options.port}`
   connection.transaction.results.add(plugin, {
     msg: `sock: ${options.host}:${options.port}`,
-  });
+  })
 
-  connection.logdebug(plugin, `checking ${email}`);
+  connection.logdebug(plugin, `checking ${email}`)
   const client = net.connect(options, function () {
     //'connect' listener
     connection.logprotocol(
       plugin,
       `connect to Dovecot auth-userdb:${JSON.stringify(options)}`,
-    );
-  });
+    )
+  })
 
   client
-    .on("data", (chunk) => {
-      connection.logprotocol(plugin, `BODY: ${chunk}`);
-      const arr = exports.check_dovecot_response(chunk.toString());
+    .on('data', (chunk) => {
+      connection.logprotocol(plugin, `BODY: ${chunk}`)
+      const arr = exports.check_dovecot_response(chunk.toString())
       if (arr[0] === CONT) {
-        const send_data = `${"VERSION\t1\t0\n" + "USER\t1\t"}${email}\tservice=smtp\n`;
-        client.write(send_data);
+        const send_data = `${'VERSION\t1\t0\n' + 'USER\t1\t'}${email}\tservice=smtp\n`
+        client.write(send_data)
       } else {
-        cb(undefined, arr);
+        cb(undefined, arr)
       }
     })
-    .on("error", (e) => {
-      client.end();
-      cb(e);
+    .on('error', (e) => {
+      client.end()
+      cb(e)
     })
     .on('end', () => {
-      connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb');
+      connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb')
     })
 }
 
 exports.check_dovecot_response = function (data) {
-  if (data.match(/^VERSION\t\d+\t/i) && data.slice(-1) === "\n") {
-    return [CONT, "Send now username to check process."];
-  } else if (data.match(/^USER\t1/i) && data.slice(-1) === "\n") {
-    return [OK, "Mailbox found."];
-  } else if (data.match(/^FAIL\t1/i) && data.slice(-1) === "\n") {
+  if (data.match(/^VERSION\t\d+\t/i) && data.slice(-1) === '\n') {
+    return [CONT, 'Send now username to check process.']
+  } else if (data.match(/^USER\t1/i) && data.slice(-1) === '\n') {
+    return [OK, 'Mailbox found.']
+  } else if (data.match(/^FAIL\t1/i) && data.slice(-1) === '\n') {
     return [
       DENYSOFT,
-      "Temporarily undeliverable: internal communication broken",
-    ];
+      'Temporarily undeliverable: internal communication broken',
+    ]
   } else {
-    return [undefined, "Mailbox not found."];
+    return [undefined, 'Mailbox not found.']
   }
-};
+}
