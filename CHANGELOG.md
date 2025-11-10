@@ -5,7 +5,9 @@
 ### [0.2.2] - 2025-11-10
 
 - use auth-userdb instead of auth-master #15
-- 
+- load config file when registering
+- doc(CHANGELOG): added
+- doc(CONTRIBUTORS): added
 
 ### [0.2.0] - 2025-11-10
 
