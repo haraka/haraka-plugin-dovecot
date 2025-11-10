@@ -1,10 +1,10 @@
-"use strict";
+'use strict';
 
-const net = require("net");
+const net = require('node:net');
 
 exports.register = function () {
-  this.register_hook("rcpt", "check_rcpt_on_dovecot");
-  this.register_hook("mail", "check_mail_on_dovecot");
+  this.register_hook('rcpt', 'check_rcpt_on_dovecot');
+  this.register_hook('mail', 'check_mail_on_dovecot');
 };
 
 exports.load_dovecot_ini = function () {
@@ -142,7 +142,7 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
       connection.logprotocol(plugin, `BODY: ${chunk}`);
       const arr = exports.check_dovecot_response(chunk.toString());
       if (arr[0] === CONT) {
-        const send_data = `${"VERSION\t1\t0\n" + "USER\t1\t"}${email.replace("@", "@")}\tservice=smtp\n`;
+        const send_data = `${"VERSION\t1\t0\n" + "USER\t1\t"}${email}\tservice=smtp\n`;
         client.write(send_data);
       } else {
         cb(undefined, arr);
