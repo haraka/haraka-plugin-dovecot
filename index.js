@@ -122,7 +122,7 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
     }
   }
 
-  let socket_address = options.path ?
+  const socket_address = options.path ?
     options.path :
     `${options.host}:${options.port}`;
   connection.transaction.results.add(plugin, {
