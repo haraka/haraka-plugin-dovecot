@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-dovecot",
-  "version": "0.2.0",
+  "version": "0.2.2",
   "description": "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and SMTP AUTH",
   "author": {
     "name": "Josef Fr�hle",
@@ -37,7 +37,10 @@
     "lint:fix": "npx eslint --fix *.js test",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-    "coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js"
+    "coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js",
+    "format": "npm run prettier:fix && npm run lint:fix",
+    "versions": "npx dependency-version-checker check",
+    "versions:fix": "npx dependency-version-checker update"
   },
   "repository": {
     "type": "git",
@@ -49,5 +52,9 @@
   },
   "license": "MIT",
   "dependencies": {},
-  "optionalDependencies": {}
+  "optionalDependencies": {},
+  "prettier": {
+    "singleQuote": true,
+    "semi": false
+  }
 }
