@@ -8,6 +8,7 @@
 - load config file when registering
 - doc(CHANGELOG): added
 - doc(CONTRIBUTORS): added
+- package.json: populate [files] section
 
 ### [0.2.0] - 2025-11-10
 
