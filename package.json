@@ -1,49 +1,49 @@
 {
-	"name": "haraka-plugin-dovecot",
-	"version": "0.1.1",
-	"description": "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and SMTP AUTH",
-	"author": {
-		"name": "Josef Fr�hle",
-		"email": "github@josef-froehle.de",
-		"url": "https://www.josef-froehle.de/"
-	},
-	"main": "index.js",
-	"homepage": "https://github.com/haraka/haraka-plugin-dovecot",
-	"keywords": [
-		"email",
-		"mail",
-		"dovecot",
-		"plaintext",
-		"login",
-		"lmtp",
-		"auth",
-		"mailbox"
-	],
-	"bugs": {
-		"url": "https://github.com/haraka/haraka-plugin-dovecot/issues"
-	},
-	"config": {
-		"blanket": {
-			"pattern": "lib/index.js"
-		}
-	},
-	"scripts": {
-		"test": "npx mocha",
-		"lint": "npx eslint *.js test",
-		"lint:fix": "npx eslint --fix *.js test",
+  "name": "haraka-plugin-dovecot",
+  "version": "0.1.1",
+  "description": "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and SMTP AUTH",
+  "author": {
+    "name": "Josef Fr�hle",
+    "email": "github@josef-froehle.de",
+    "url": "https://www.josef-froehle.de/"
+  },
+  "main": "index.js",
+  "homepage": "https://github.com/haraka/haraka-plugin-dovecot",
+  "keywords": [
+    "email",
+    "mail",
+    "dovecot",
+    "plaintext",
+    "login",
+    "lmtp",
+    "auth",
+    "mailbox"
+  ],
+  "bugs": {
+    "url": "https://github.com/haraka/haraka-plugin-dovecot/issues"
+  },
+  "config": {
+    "blanket": {
+      "pattern": "lib/index.js"
+    }
+  },
+  "scripts": {
+    "test": "npx mocha",
+    "lint": "npx eslint *.js test",
+    "lint:fix": "npx eslint --fix *.js test",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-		"coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js"
-	},
-	"repository": {
-		"type": "git",
-		"url": "git://github.com/haraka/haraka-plugin-dovecot.git"
-	},
-	"devDependencies": {
-  "@haraka/eslint-config": "^2.0.2",
-		"mocha": "*"
-	},
-	"license": "MIT",
-	"dependencies": {},
-	"optionalDependencies": {}
+    "coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/haraka/haraka-plugin-dovecot.git"
+  },
+  "devDependencies": {
+    "@haraka/eslint-config": "^2.0.2",
+    "mocha": "*"
+  },
+  "license": "MIT",
+  "dependencies": {},
+  "optionalDependencies": {}
 }
