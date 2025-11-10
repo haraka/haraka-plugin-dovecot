@@ -8,16 +8,13 @@ exports.register = function () {
 };
 
 exports.load_dovecot_ini = function () {
-  const plugin = this;
-  plugin.cfg = plugin.config.get("dovecot.ini", function () {
-    plugin.load_dovecot_ini();
+  this.cfg = this.config.get("dovecot.ini", () => {
+    this.load_dovecot_ini();
   });
 };
 
 exports.check_mail_on_dovecot = function (next, connection, params) {
-  const plugin = this;
-
-  if (!plugin.cfg.main.check_outbound) return next();
+  if (!this.cfg.main.check_outbound) return next();
 
   // determine if MAIL FROM domain is local
   const txn = connection.transaction;
@@ -25,31 +22,31 @@ exports.check_mail_on_dovecot = function (next, connection, params) {
   const email = params[0].address();
   if (!email) {
     // likely an IP with relaying permission
-    txn.results.add(plugin, { skip: "mail_from.null", emit: true });
+    txn.results.add(this, { skip: "mail_from.null", emit: true });
     return next();
   }
 
   const domain = params[0].host.toLowerCase();
 
-  plugin.get_dovecot_response(connection, domain, email, (err, result) => {
+  this.get_dovecot_response(connection, domain, email, (err, result) => {
     if (err) {
-      txn.results.add(plugin, { err });
+      txn.results.add(this, { err });
       return next(DENYSOFT, err);
     }
 
     // the MAIL FROM sender is verified as a local address
     if (result[0] === OK) {
-      txn.results.add(plugin, { pass: `mail_from.${result[1]}` });
+      txn.results.add(this, { pass: `mail_from.${result[1]}` });
       txn.notes.local_sender = true;
       return next();
     }
 
     if (result[0] === undefined) {
-      txn.results.add(plugin, { err: `mail_from.${result[1]}` });
+      txn.results.add(this, { err: `mail_from.${result[1]}` });
       return next();
     }
 
-    txn.results.add(plugin, { msg: `mail_from.${result[1]}` });
+    txn.results.add(this, { msg: `mail_from.${result[1]}` });
     next(CONT, `mail_from.${result[1]}`);
   });
 };
