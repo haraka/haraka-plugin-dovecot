@@ -29,8 +29,10 @@
 	},
 	"scripts": {
 		"test": "npx mocha",
-		"lint": "npx eslint *.js test/*.js",
-		"lintfix": "npx eslint --fix *.js test/*.js",
+		"lint": "npx eslint *.js test",
+		"lint:fix": "npx eslint --fix *.js test",
+    "prettier": "npx prettier . --check",
+    "prettier:fix": "npx prettier . --write --log-level=warn",
 		"coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js"
 	},
 	"repository": {
@@ -38,8 +40,7 @@
 		"url": "git://github.com/haraka/haraka-plugin-dovecot.git"
 	},
 	"devDependencies": {
-		"eslint": "*",
-		"eslint-plugin-haraka": "*",
+  "@haraka/eslint-config": "^2.0.2",
 		"mocha": "*"
 	},
 	"license": "MIT",
