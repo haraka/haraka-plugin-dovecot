@@ -8,6 +8,8 @@ env:
 jobs:
   prettier:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/setup-node@v4
       - uses: actions/checkout@v4
