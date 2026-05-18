@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-dovecot",
-  "version": "0.2.2",
+  "version": "0.3.0",
   "description": "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and SMTP AUTH",
   "author": {
     "name": "Josef Fr�hle",
@@ -11,6 +11,9 @@
     "CHANGELOG.md",
     "config"
   ],
+  "engines": {
+    "node": ">=20"
+  },
   "main": "index.js",
   "homepage": "https://github.com/haraka/haraka-plugin-dovecot",
   "keywords": [
@@ -33,11 +36,11 @@
   },
   "scripts": {
     "test": "npx mocha",
+    "test:coverage": "HARAKA_COVERAGE=1 npx c8 npm test",
     "lint": "npx eslint *.js test",
     "lint:fix": "npx eslint --fix *.js test",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-    "coveralls": "DOVECOT_COVERAGE=1 npx mocha --require blanket --reporter mocha-lcov-reporter | npx coveralls.js",
     "format": "npm run prettier:fix && npm run lint:fix",
     "versions": "npx dependency-version-checker check",
     "versions:fix": "npx dependency-version-checker update"
@@ -48,6 +51,7 @@
   },
   "devDependencies": {
     "@haraka/eslint-config": "^2.0.2",
+    "haraka-test-fixtures": "^1.3.8",
     "mocha": "*"
   },
   "license": "MIT",

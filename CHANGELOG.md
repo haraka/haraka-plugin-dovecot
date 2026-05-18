@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Added
+
+- instrumentation to measure test coverage
+
 ### [0.2.2] - 2025-11-10
 
 - use auth-userdb instead of auth-master #15
