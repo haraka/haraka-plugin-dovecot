@@ -9,18 +9,22 @@ exports.register = function () {
 }
 
 exports.load_dovecot_ini = function () {
-  this.cfg = this.config.get('dovecot.ini', () => {
-    this.load_dovecot_ini()
-  })
+  this.cfg = this.config.get(
+    'dovecot.ini',
+    { booleans: ['+main.check_outbound'] },
+    () => {
+      this.load_dovecot_ini()
+    },
+  )
 }
 
-exports.check_mail_on_dovecot = function (next, connection, params) {
+exports.check_mail_on_dovecot = async function (next, connection, params) {
   if (!this.cfg.main.check_outbound) return next()
 
   // determine if MAIL FROM domain is local
   const txn = connection.transaction
 
-  const email = params[0].address()
+  const email = params[0].address
   if (!email) {
     // likely an IP with relaying permission
     txn.results.add(this, { skip: 'mail_from.null', emit: true })
@@ -29,30 +33,31 @@ exports.check_mail_on_dovecot = function (next, connection, params) {
 
   const domain = params[0].host.toLowerCase()
 
-  this.get_dovecot_response(connection, domain, email, (err, result) => {
-    if (err) {
-      txn.results.add(this, { err })
-      return next(DENYSOFT, err)
-    }
+  let result
+  try {
+    result = await this.get_dovecot_response(connection, domain, email)
+  } catch (err) {
+    txn.results.add(this, { err })
+    return next(DENYSOFT, err.message)
+  }
 
-    // the MAIL FROM sender is verified as a local address
-    if (result[0] === OK) {
-      txn.results.add(this, { pass: `mail_from.${result[1]}` })
-      txn.notes.local_sender = true
-      return next()
-    }
+  // the MAIL FROM sender is verified as a local address
+  if (result[0] === OK) {
+    txn.results.add(this, { pass: `mail_from.${result[1]}` })
+    txn.notes.local_sender = true
+    return next()
+  }
 
-    if (result[0] === undefined) {
-      txn.results.add(this, { err: `mail_from.${result[1]}` })
-      return next()
-    }
+  if (result[0] === undefined) {
+    txn.results.add(this, { err: `mail_from.${result[1]}` })
+    return next()
+  }
 
-    txn.results.add(this, { msg: `mail_from.${result[1]}` })
-    next(CONT, `mail_from.${result[1]}`)
-  })
+  txn.results.add(this, { msg: `mail_from.${result[1]}` })
+  next(CONT, `mail_from.${result[1]}`)
 }
 
-exports.check_rcpt_on_dovecot = function (next, connection, params) {
+exports.check_rcpt_on_dovecot = async function (next, connection, params) {
   const plugin = this
   const txn = connection.transaction
   if (!txn) return
@@ -60,45 +65,39 @@ exports.check_rcpt_on_dovecot = function (next, connection, params) {
   const rcpt = params[0]
   const domain = rcpt.host.toLowerCase()
 
-  // Qmail::Deliverable::Client does a rfc2822 "atext" test
-  // but Haraka has already validated for us by this point
-  plugin.get_dovecot_response(
-    connection,
-    domain,
-    rcpt.address(),
-    (err, result) => {
-      if (err) {
-        connection.logerror(plugin, err)
-        txn.results.add(plugin, { err })
-        return next(DENYSOFT, 'error validating email address')
-      }
+  let result
+  try {
+    result = await plugin.get_dovecot_response(connection, domain, rcpt.address)
+  } catch (err) {
+    connection.logerror(plugin, err.message)
+    txn.results.add(plugin, { err })
+    return next(DENYSOFT, 'error validating email address')
+  }
 
-      if (result[0] === OK) {
-        txn.results.add(plugin, { pass: `rcpt.${result[1]}` })
-        return next(OK)
-      }
+  if (result[0] === OK) {
+    txn.results.add(plugin, { pass: `rcpt.${result[1]}` })
+    return next(OK)
+  }
 
-      // a client with relaying privileges is sending from a local domain.
-      // Any RCPT is acceptable.
-      if (connection.relaying && txn.notes.local_sender) {
-        txn.results.add(plugin, { pass: 'relaying local_sender' })
-        return next(OK)
-      }
+  // a client with relaying privileges is sending from a local domain.
+  // Any RCPT is acceptable.
+  if (connection.relaying && txn.notes.local_sender) {
+    txn.results.add(plugin, { pass: 'relaying local_sender' })
+    return next(OK)
+  }
 
-      if (result[0] === undefined) {
-        txn.results.add(plugin, { err: `rcpt.${result[1]}` })
-        return next()
-      }
+  if (result[0] === undefined) {
+    txn.results.add(plugin, { err: `rcpt.${result[1]}` })
+    return next()
+  }
 
-      // no need to DENY[SOFT] for invalid addresses. If no rcpt_to.* plugin
-      // returns OK, then the address is not accepted.
-      txn.results.add(plugin, { msg: `rcpt.${result[1]}` })
-      next(CONT, result[1])
-    },
-  )
+  // no need to DENY[SOFT] for invalid addresses. If no rcpt_to.* plugin
+  // returns OK, then the address is not accepted.
+  txn.results.add(plugin, { msg: `rcpt.${result[1]}` })
+  next(CONT, result[1])
 }
 
-exports.get_dovecot_response = function (connection, domain, email, cb) {
+exports.get_dovecot_response = function (connection, domain, email) {
   const plugin = this
   const options = {}
 
@@ -122,40 +121,63 @@ exports.get_dovecot_response = function (connection, domain, email, cb) {
     }
   }
 
-  //const socket_address = options.path
-  //  ? options.path
-  //  : `${options.host}:${options.port}`
+  const socket_address = options.path
+    ? options.path
+    : `${options.host}:${options.port}`
   connection.transaction.results.add(plugin, {
-    msg: `sock: ${options.host}:${options.port}`,
+    msg: `sock: ${socket_address}`,
   })
+
+  // milliseconds before a stuck connection is abandoned with DENYSOFT
+  const timeout = (plugin.cfg.main.timeout || 30) * 1000
 
   connection.logdebug(plugin, `checking ${email}`)
-  const client = net.connect(options, function () {
-    //'connect' listener
-    connection.logprotocol(
-      plugin,
-      `connect to Dovecot auth-userdb:${JSON.stringify(options)}`,
-    )
-  })
 
-  client
-    .on('data', (chunk) => {
-      connection.logprotocol(plugin, `BODY: ${chunk}`)
-      const arr = exports.check_dovecot_response(chunk.toString())
-      if (arr[0] === CONT) {
-        const send_data = `${'VERSION\t1\t0\n' + 'USER\t1\t'}${email}\tservice=smtp\n`
-        client.write(send_data)
-      } else {
-        cb(undefined, arr)
-      }
+  return new Promise((resolve, reject) => {
+    const client = net.connect(options, () => {
+      connection.logprotocol(
+        plugin,
+        `connect to Dovecot auth-userdb:${JSON.stringify(options)}`,
+      )
     })
-    .on('error', (e) => {
+
+    // The original callback API could fire more than once: a second 'data'
+    // chunk, or an 'error' after a response, re-invoked the caller. The
+    // Promise settles exactly once; the guard also prevents writing to or
+    // leaking a socket we are done with.
+    let settled = false
+    function finish(err, result) {
+      if (settled) return
+      settled = true
       client.end()
-      cb(e)
+      if (err) {
+        reject(err)
+      } else {
+        resolve(result)
+      }
+    }
+
+    client.setTimeout(timeout, () => {
+      finish(new Error(`Dovecot auth-userdb timeout after ${timeout}ms`))
     })
-    .on('end', () => {
-      connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb')
-    })
+
+    client
+      .on('data', (chunk) => {
+        connection.logprotocol(plugin, `BODY: ${chunk}`)
+        const arr = plugin.check_dovecot_response(chunk.toString())
+        if (arr[0] === CONT) {
+          client.write(`VERSION\t1\t0\nUSER\t1\t${email}\tservice=smtp\n`)
+        } else {
+          finish(undefined, arr)
+        }
+      })
+      .on('error', (e) => {
+        finish(e)
+      })
+      .on('end', () => {
+        connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb')
+      })
+  })
 }
 
 exports.check_dovecot_response = function (data) {

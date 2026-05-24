@@ -29,30 +29,27 @@
   "bugs": {
     "url": "https://github.com/haraka/haraka-plugin-dovecot/issues"
   },
-  "config": {
-    "blanket": {
-      "pattern": "lib/index.js"
-    }
-  },
   "scripts": {
-    "test": "npx mocha",
     "test:coverage": "HARAKA_COVERAGE=1 npx c8 npm test",
+    "format": "npm run prettier:fix && npm run lint:fix",
     "lint": "npx eslint *.js test",
-    "lint:fix": "npx eslint --fix *.js test",
+    "lint:fix": "npx eslint *.js test --fix",
     "prettier": "npx prettier . --check",
     "prettier:fix": "npx prettier . --write --log-level=warn",
-    "format": "npm run prettier:fix && npm run lint:fix",
-    "versions": "npx dependency-version-checker check",
-    "versions:fix": "npx dependency-version-checker update"
+    "test": "node --test",
+    "test:only": "node --test --test-only",
+    "test:coverage": "HARAKA_COVERAGE=1 node --test --experimental-test-coverage --test-coverage-exclude=package.json --test-coverage-exclude=test/*.js",
+    "test:coverage:lcov": "mkdir -p coverage && node --test --experimental-test-coverage --test-reporter=lcov --test-reporter-destination=coverage/lcov.info test/*.js",
+    "versions": "npx npm-dep-mgr check",
+    "versions:fix": "npx npm-dep-mgr update"
   },
   "repository": {
     "type": "git",
     "url": "git://github.com/haraka/haraka-plugin-dovecot.git"
   },
   "devDependencies": {
-    "@haraka/eslint-config": "^2.0.2",
-    "haraka-test-fixtures": "^1.3.8",
-    "mocha": "*"
+    "@haraka/eslint-config": "^2.0.4",
+    "haraka-test-fixtures": "~1.5.1"
   },
   "license": "MIT",
   "dependencies": {},

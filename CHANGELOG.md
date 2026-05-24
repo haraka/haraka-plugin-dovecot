@@ -2,9 +2,18 @@
 
 ## Unreleased
 
-### Added
+### [0.3.0] - 2026-05-18
 
-- instrumentation to measure test coverage
+- change: use @haraka/email-address syntax (vs address-rfc2821)
+  - related to https://github.com/haraka/Haraka/issues/3564
+- change: `get_dovecot_response` is now async (Promise) instead of callback
+- change: `check_mail_on_dovecot` / `check_rcpt_on_dovecot` are now async
+- fix: get_dovecot_response settles exactly once
+- fix: abandon a stuck auth-userdb connection after `main.timeout` seconds
+- fix: `check_outbound=false` in dovecot.ini is now honored, vs string 'false'
+- fix: `sock:` result now reports the unix socket path when one is used
+- test: expand test coverage
+- feat: add test coverage instrumentation
 
 ### [0.2.2] - 2025-11-10
 
@@ -24,3 +33,4 @@
 
 [0.2.2]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.2.2
 [0.2.0]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.2.0
+[0.3.0]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.3.0
