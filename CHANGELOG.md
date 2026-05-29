@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Unreleased
+
+- test: refactored against test-fixtures 1.7.0
+
 ### [0.3.0] - 2026-05-18
 
 - change: use @haraka/email-address syntax (vs address-rfc2821)
