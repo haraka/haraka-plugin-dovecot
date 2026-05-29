@@ -1,10 +1,16 @@
 # Changelog
 
-## Unreleased
-
 ### Unreleased
 
-- test: refactored against test-fixtures 1.7.0
+### [0.3.1] - 2026-05-29
+
+- fix: buffer auth-userdb replies per newline
+- fix: RCPT hook now calls `next()` when transaction is missing
+- fix: guard `params[0]` / `host` in MAIL and RCPT hooks
+- security: drop socket path/endpoint from `results`; log to debug only
+- refactor: extract `dovecot_socket_options()` and `handle_dovecot_line()`
+- doc: README clarifies plugin validates MAIL/RCPT via auth-userdb
+- test: refactored against test-fixtures 1.7.0 #19
 
 ### [0.3.0] - 2026-05-18
 
@@ -38,3 +44,4 @@
 [0.2.2]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.2.2
 [0.2.0]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.2.0
 [0.3.0]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.3.0
+[0.3.1]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.3.1

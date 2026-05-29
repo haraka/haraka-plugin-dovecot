@@ -1,6 +1,6 @@
 {
   "name": "haraka-plugin-dovecot",
-  "version": "0.3.0",
+  "version": "0.3.1",
   "description": "Haraka mail plugin to communicate with Dovecot. Exist Mailbox and SMTP AUTH",
   "author": {
     "name": "Josef Fr�hle",
@@ -53,8 +53,6 @@
     "haraka-test-fixtures": "^1.7.0"
   },
   "license": "MIT",
-  "dependencies": {},
-  "optionalDependencies": {},
   "prettier": {
     "singleQuote": true,
     "semi": false
