@@ -53,8 +53,6 @@
     "haraka-test-fixtures": "^1.7.0"
   },
   "license": "MIT",
-  "dependencies": {},
-  "optionalDependencies": {},
   "prettier": {
     "singleQuote": true,
     "semi": false
