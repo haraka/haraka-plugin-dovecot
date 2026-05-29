@@ -25,6 +25,7 @@ exports.check_mail_on_dovecot = async function (next, connection, params) {
   if (!addr) return next()
 
   const txn = connection.transaction
+  if (!txn) return next()
 
   const email = addr.address
   if (!email) {
