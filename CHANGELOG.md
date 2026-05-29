@@ -2,12 +2,6 @@
 
 ### Unreleased
 
-### [0.3.2] - 2026-05-29
-
-#### Changed
-
-- refactored against test-fixtures 1.7.0 (#19)
-
 ### [0.3.1] - 2026-05-29
 
 - refactored against test-fixtures 1.7.0 (#19)
@@ -52,4 +46,3 @@
 [0.2.0]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.2.0
 [0.3.0]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.3.0
 [0.3.1]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.3.1
-[0.3.2]: https://github.com/haraka/haraka-plugin-dovecot/releases/tag/v0.3.2

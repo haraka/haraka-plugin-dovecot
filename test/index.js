@@ -439,14 +439,142 @@ describe('check_rcpt_on_dovecot', function () {
     )
   })
 
-  it('returns early without a transaction', function () {
+  it('calls next() when there is no transaction', function (t, done) {
     this.connection.transaction = null
-    const ret = this.plugin.check_rcpt_on_dovecot(
-      () => assert.fail('next should not be called'),
+    this.plugin.check_rcpt_on_dovecot(
+      (code) => {
+        assert.equal(code, undefined)
+        done()
+      },
       this.connection,
       rcpt(),
     )
-    // async fn returns a promise that resolves to undefined
-    return ret
+  })
+
+  it('calls next() when params is missing', function (t, done) {
+    this.plugin.check_rcpt_on_dovecot(
+      (code) => {
+        assert.equal(code, undefined)
+        done()
+      },
+      this.connection,
+      undefined,
+    )
+  })
+
+  it('calls next() when params[0] has no host', function (t, done) {
+    this.plugin.check_rcpt_on_dovecot(
+      (code) => {
+        assert.equal(code, undefined)
+        done()
+      },
+      this.connection,
+      [{ address: 'x@y' }],
+    )
+  })
+})
+
+describe('check_mail_on_dovecot — guards', function () {
+  beforeEach(_set_up)
+
+  it('calls next() when params is missing', function (t, done) {
+    this.plugin.cfg = { main: { check_outbound: true } }
+    this.plugin.check_mail_on_dovecot(
+      (code) => {
+        assert.equal(code, undefined)
+        done()
+      },
+      this.connection,
+      undefined,
+    )
+  })
+
+  it('calls next() when params[0] is missing', function (t, done) {
+    this.plugin.cfg = { main: { check_outbound: true } }
+    this.plugin.check_mail_on_dovecot(
+      (code) => {
+        assert.equal(code, undefined)
+        done()
+      },
+      this.connection,
+      [],
+    )
+  })
+})
+
+describe('socket endpoint disclosure (S1)', function () {
+  beforeEach(_set_up)
+  afterEach(_tear_down)
+
+  it('does not write socket details to transaction results', async function () {
+    const port = await startServer.call(this, 'USER\t1\tuser@example.com\n')
+    this.plugin.cfg = { main: { host: '127.0.0.1', port } }
+    await this.plugin.get_dovecot_response(
+      this.connection,
+      'example.com',
+      'user@example.com',
+    )
+    const r = this.connection.transaction.results.get('dovecot')
+    const all = [].concat(
+      r?.msg ?? [],
+      r?.pass ?? [],
+      r?.fail ?? [],
+      r?.skip ?? [],
+    )
+    assert.ok(
+      !all.some((s) => /sock:|127\.0\.0\.1:/.test(String(s))),
+      `socket detail leaked: ${JSON.stringify(all)}`,
+    )
+  })
+})
+
+describe('chunked dovecot responses (C1)', function () {
+  beforeEach(_set_up)
+  afterEach(_tear_down)
+
+  // Custom server that splits the protocol response across multiple TCP
+  // chunks to verify the plugin re-assembles complete lines before parsing.
+  function chunkedServer(chunks) {
+    return fakeDovecot('', {
+      onConnect(sock) {
+        sock.write('VERSION\t1\t0\n')
+        sock.once('data', () => {
+          let i = 0
+          const sendNext = () => {
+            if (i >= chunks.length) return
+            sock.write(chunks[i++], sendNext)
+          }
+          sendNext()
+        })
+      },
+    })
+  }
+
+  it('reassembles a reply split across multiple chunks', async function () {
+    const server = chunkedServer(['USER', '\t1\tuser@', 'example.com\n'])
+    const port = await listen(server)
+    this.servers.push(server)
+    this.plugin.cfg = { main: { host: '127.0.0.1', port } }
+
+    const result = await this.plugin.get_dovecot_response(
+      this.connection,
+      'example.com',
+      'user@example.com',
+    )
+    assert.deepEqual(result, [OK, 'Mailbox found.'])
+  })
+
+  it('handles a NOTFOUND reply split across chunks', async function () {
+    const server = chunkedServer(['NOT', 'FOUND', '\t1\n'])
+    const port = await listen(server)
+    this.servers.push(server)
+    this.plugin.cfg = { main: { host: '127.0.0.1', port } }
+
+    const result = await this.plugin.get_dovecot_response(
+      this.connection,
+      'example.com',
+      'nope@example.com',
+    )
+    assert.deepEqual(result, [undefined, 'Mailbox not found.'])
   })
 })

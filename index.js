@@ -21,17 +21,20 @@ exports.load_dovecot_ini = function () {
 exports.check_mail_on_dovecot = async function (next, connection, params) {
   if (!this.cfg.main.check_outbound) return next()
 
-  // determine if MAIL FROM domain is local
+  const addr = params?.[0]
+  if (!addr) return next()
+
   const txn = connection.transaction
 
-  const email = params[0].address
+  const email = addr.address
   if (!email) {
     // likely an IP with relaying permission
     txn.results.add(this, { skip: 'mail_from.null', emit: true })
     return next()
   }
 
-  const domain = params[0].host.toLowerCase()
+  const domain = addr.host?.toLowerCase()
+  if (!domain) return next()
 
   let result
   try {
@@ -60,10 +63,13 @@ exports.check_mail_on_dovecot = async function (next, connection, params) {
 exports.check_rcpt_on_dovecot = async function (next, connection, params) {
   const plugin = this
   const txn = connection.transaction
-  if (!txn) return
+  if (!txn) return next()
 
-  const rcpt = params[0]
-  const domain = rcpt.host.toLowerCase()
+  const rcpt = params?.[0]
+  if (!rcpt) return next()
+
+  const domain = rcpt.host?.toLowerCase()
+  if (!domain) return next()
 
   let result
   try {
@@ -97,36 +103,28 @@ exports.check_rcpt_on_dovecot = async function (next, connection, params) {
   next(CONT, result[1])
 }
 
-exports.get_dovecot_response = function (connection, domain, email) {
-  const plugin = this
-  const options = {}
-
-  if (plugin.cfg[domain]) {
-    if (plugin.cfg[domain].path) {
-      options.path = plugin.cfg[domain].path
-    } else {
-      if (plugin.cfg[domain].host) {
-        options.host = plugin.cfg[domain].host
-      }
-      if (plugin.cfg[domain].port) {
-        options.port = plugin.cfg[domain].port
-      }
-    }
-  } else {
-    if (plugin.cfg.main.path) {
-      options.path = plugin.cfg.main.path
-    } else {
-      if (plugin.cfg.main.host) options.host = plugin.cfg.main.host
-      if (plugin.cfg.main.port) options.port = plugin.cfg.main.port
+// Resolve the connect-options for `domain`: a per-domain socket overrides
+// the global default. Returns either { path } (unix socket) or { host, port }.
+exports.dovecot_socket_options = function (domain) {
+  const sources = [this.cfg[domain], this.cfg.main].filter(Boolean)
+  for (const src of sources) {
+    if (src.path) return { path: src.path }
+    if (src.host || src.port) {
+      const opts = {}
+      if (src.host) opts.host = src.host
+      if (src.port) opts.port = src.port
+      return opts
     }
   }
+  return {}
+}
 
-  const socket_address = options.path
-    ? options.path
-    : `${options.host}:${options.port}`
-  connection.transaction.results.add(plugin, {
-    msg: `sock: ${socket_address}`,
-  })
+exports.get_dovecot_response = function (connection, domain, email) {
+  const plugin = this
+  const options = plugin.dovecot_socket_options(domain)
+
+  const socket_address = options.path ?? `${options.host}:${options.port}`
+  connection.logdebug(plugin, `sock: ${socket_address}`)
 
   // milliseconds before a stuck connection is abandoned with DENYSOFT
   const timeout = (plugin.cfg.main.timeout || 30) * 1000
@@ -150,34 +148,67 @@ exports.get_dovecot_response = function (connection, domain, email) {
       if (settled) return
       settled = true
       client.end()
-      if (err) {
-        reject(err)
-      } else {
-        resolve(result)
-      }
+      if (err) return reject(err)
+      resolve(result)
     }
 
     client.setTimeout(timeout, () => {
       finish(new Error(`Dovecot auth-userdb timeout after ${timeout}ms`))
     })
 
+    // Dovecot replies must be parsed per complete protocol record
+    // (newline-terminated), not per TCP chunk. Buffer until a full line
+    // arrives
+    let buffer = ''
+    let sentUserRequest = false
+
     client
       .on('data', (chunk) => {
         connection.logprotocol(plugin, `BODY: ${chunk}`)
-        const arr = plugin.check_dovecot_response(chunk.toString())
-        if (arr[0] === CONT) {
-          client.write(`VERSION\t1\t0\nUSER\t1\t${email}\tservice=smtp\n`)
-        } else {
-          finish(undefined, arr)
+        buffer += chunk.toString()
+        let nl
+        while ((nl = buffer.indexOf('\n')) !== -1) {
+          const line = buffer.slice(0, nl + 1)
+          buffer = buffer.slice(nl + 1)
+          if (
+            plugin.handle_dovecot_line(
+              client,
+              line,
+              email,
+              sentUserRequest,
+              finish,
+            )
+          ) {
+            sentUserRequest = true
+          } else {
+            return // finish() invoked
+          }
         }
       })
-      .on('error', (e) => {
-        finish(e)
-      })
+      .on('error', finish)
       .on('end', () => {
         connection.logprotocol(plugin, 'closed connect to Dovecot auth-userdb')
       })
   })
+}
+
+// Process one complete dovecot protocol record. Returns true if the caller
+// should keep reading (we sent the USER request and are awaiting the reply);
+// false if the response has been finalized (finish() was invoked).
+exports.handle_dovecot_line = function (
+  client,
+  line,
+  email,
+  sentUserRequest,
+  finish,
+) {
+  const arr = this.check_dovecot_response(line)
+  if (!sentUserRequest && arr[0] === CONT) {
+    client.write(`VERSION\t1\t0\nUSER\t1\t${email}\tservice=smtp\n`)
+    return true
+  }
+  finish(undefined, arr)
+  return false
 }
 
 exports.check_dovecot_response = function (data) {
@@ -190,7 +221,6 @@ exports.check_dovecot_response = function (data) {
       DENYSOFT,
       'Temporarily undeliverable: internal communication broken',
     ]
-  } else {
-    return [undefined, 'Mailbox not found.']
   }
+  return [undefined, 'Mailbox not found.']
 }

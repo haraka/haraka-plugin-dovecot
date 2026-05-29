@@ -2,7 +2,7 @@
 
 [![Test][ci-img]][ci-url] [![Cover][cov-img]][cov-url] [![Qlty][qlty-img]][qlty-url]
 
-Haraka mail plugin that checks whether a mailbox exists (Dovecot auth-userdb) and the SMTP-Auth per Dovecot (service auth is also used by Postfix) allowed.
+Haraka mail plugin that validates MAIL FROM and RCPT TO addresses against Dovecot's `auth-userdb` service (the same service Postfix uses for recipient validation).
 
 ## USAGE
 
