@@ -6,7 +6,7 @@ const os = require('node:os')
 const path = require('node:path')
 const { afterEach, beforeEach, describe, it } = require('node:test')
 
-const fixtures = require('haraka-test-fixtures')
+const { makeConnection, makePlugin } = require('haraka-test-fixtures')
 
 // A minimal fake Dovecot auth-userdb server.
 //
@@ -39,9 +39,8 @@ function listen(server) {
 }
 
 function _set_up() {
-  this.plugin = new fixtures.plugin('dovecot')
-  this.connection = fixtures.connection.createConnection()
-  this.connection.init_transaction()
+  this.plugin = makePlugin('dovecot', { register: false })
+  this.connection = makeConnection({ withTxn: true })
   this.servers = []
 }
 
